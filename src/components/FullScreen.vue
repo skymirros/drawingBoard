@@ -1,0 +1,47 @@
+<template>
+  <FunctionIcon :tools="tools">
+    <template v-slot:icon>
+      <svg
+        t="1679900516624"
+        class="icon"
+        viewBox="0 0 1024 1024"
+        version="1.1"
+        xmlns="http://www.w3.org/2000/svg"
+        p-id="2745"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        width="32"
+        height="32"
+      >
+        <path
+          d="M358.4 768H426.666667v85.333333H213.333333v-213.333333h85.333334v68.266667l128-128 59.733333 59.733333-128 128z m345.6 0l-128-128 59.733333-59.733333 132.266667 132.266666V640h85.333333v213.333333h-213.333333v-85.333333h64zM358.4 298.666667l128 128-59.733333 59.733333-128-128V426.666667H213.333333V213.333333h213.333334v85.333334H358.4z m345.6 0H640V213.333333h213.333333v213.333334h-85.333333V354.133333l-132.266667 132.266667-59.733333-59.733333 128-128z"
+          fill="#444444"
+          p-id="2746"
+        ></path>
+      </svg>
+    </template>
+  </FunctionIcon>
+</template>
+
+<script lang="ts">
+import { defineComponent, reactive } from "vue";
+import FunctionIcon from "./FunctionIcon.vue";
+import screenfull from "screenfull";
+
+export default defineComponent({
+  name: "FullScreen",
+  components: { FunctionIcon },
+  setup() {
+    const setFull = () => {
+      screenfull.isFullscreen ? screenfull.exit() : screenfull.request();
+    };
+
+    const tools = reactive({
+      name: "全屏",
+      key: "F11",
+      noPanel: true,
+      cb: setFull,
+    });
+    return { tools };
+  },
+});
+</script>
