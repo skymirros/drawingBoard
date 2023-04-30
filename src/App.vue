@@ -3,21 +3,19 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted } from 'vue'
-import DrawingBoard from './components/DrawingBoard.vue'
-
-
+import { defineComponent, onMounted } from "vue";
+import DrawingBoard from "./components/DrawingBoard.vue";
 
 export default defineComponent({
-  name: 'App',
+  name: "App",
   components: {
     DrawingBoard,
   },
-})
+});
 </script>
 
 <style>
-@import 'global.css';
+@import "global.css";
 
 html,
 body,
