@@ -7,17 +7,17 @@ interface TinderParams {
   leftLeg: number;
   rightLeg: number;
 }
-export default class Template extends BaseDrawTools {
-  tinderParams: TinderParams;
+export default class CreatAnimation extends BaseDrawTools {
+  data: [TinderParams, TinderParams];
   constructor(
     canvas: HTMLCanvasElement,
     canvasBackup: HTMLCanvasElement,
     historyRecord: HistoryRecord,
-    tinderParams: TinderParams,
+    data: [TinderParams, TinderParams],
     key?: string
   ) {
     super(
-      "模板",
+      "动画",
       "panorama_fish_eye",
       canvas,
       canvasBackup,
@@ -25,7 +25,7 @@ export default class Template extends BaseDrawTools {
       "crosshair",
       key
     );
-    this.tinderParams = tinderParams;
+    this.data = data;
   }
   // head size
   hearRadii = 30;
@@ -103,56 +103,10 @@ export default class Template extends BaseDrawTools {
   draw() {
     const noop = () => {};
     return {
-      onmousedown: (e: MouseEvent) => {
-        console.log("***", this.tinderParams);
-        const { clientX: x, clientY: y } = this.getClientPostion(e);
-        this.clearContext();
-        if (this.canDraw) {
-          this.ctxBackup.beginPath();
-          this.ctxBackup.strokeStyle = this.color;
-          this.ctxBackup.fillStyle = this.color;
-          this.head(x, y);
-          this.body(x, y);
-          this.arm(
-            x,
-            y,
-            this.tinderParams?.leftArm,
-            this.tinderParams?.rightArm
-          );
-          this.leg(
-            x,
-            y,
-            this.tinderParams?.leftLeg,
-            this.tinderParams?.rightLeg
-          );
-          this.ctxBackup.fill();
-          this.ctxBackup.stroke();
-        }
-      },
-      onmousemove: (
-        e: MouseEvent,
-        options?: { startX: number; startY: number }
-      ) => {
-        this.clearContext();
-        const { clientX: x, clientY: y } = this.getClientPostion(e);
-        if (this.canDraw && options) {
-          const { startX, startY } = options;
-          this.ctxBackup.beginPath();
-          let radii = Math.sqrt(
-            (startX - x) * (startX - x) + (startY - y) * (startY - y)
-          );
-          this.ctxBackup.arc(startX, startY, radii, 0, Math.PI * 2, false);
-          this.ctxBackup.stroke();
-        } else {
-          this.ctxBackup.beginPath();
-          this.ctxBackup.arc(x, y, 20, 0, Math.PI * 2, false);
-          this.ctxBackup.stroke();
-        }
-      },
+      onmousedown: noop,
+      onmousemove: noop,
       onmouseup: noop,
-      onmouseout: (_: MouseEvent) => {
-        this.clearContext();
-      },
+      onmouseout: noop,
     };
   }
 }
