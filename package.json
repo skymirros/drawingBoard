@@ -6,6 +6,8 @@
     "build": "vuedx-typecheck . && vite build"
   },
   "dependencies": {
+    "@ffmpeg/core": "^0.11.0",
+    "@ffmpeg/ffmpeg": "^0.11.6",
     "@w-xuefeng/bindkey": "^1.0.1",
     "@w-xuefeng/fix-webm-metainfo": "^1.0.8",
     "ant-design-vue": "^3.2.20",

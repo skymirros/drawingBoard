@@ -116,14 +116,14 @@ export default class Template extends BaseDrawTools {
           this.arm(
             x,
             y,
-            this.tinderParams?.leftArm,
-            this.tinderParams?.rightArm
+            (this.tinderParams?.leftArm / 360) * Math.PI * 2,
+            (this.tinderParams?.rightArm / 360) * Math.PI * 2
           );
           this.leg(
             x,
             y,
-            this.tinderParams?.leftLeg,
-            this.tinderParams?.rightLeg
+            (this.tinderParams?.leftLeg / 360) * Math.PI * 2,
+            (this.tinderParams?.rightLeg / 360) * Math.PI * 2
           );
           this.ctxBackup.fill();
           this.ctxBackup.stroke();

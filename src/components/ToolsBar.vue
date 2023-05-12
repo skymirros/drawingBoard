@@ -74,6 +74,9 @@ import Tools from "./Tools.vue";
 import RightBar from "./RightBar.vue";
 import type { IDarwToolsBarState } from "../typing";
 
+import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
+const ffmpeg = createFFmpeg({ log: false });
+
 interface FormState {
   leftArm: number;
   rightArm: number;
@@ -114,7 +117,14 @@ export default defineComponent({
       rightLeg: 0,
     });
     // 首尾帧参数
-    const firstAndLastFrame: unknown[] = [];
+    const firstAndLastFrame: FormState[] = [];
+
+    // 合成视频
+    const imgs = ref([]);
+    const videoUrl = ref(""); //视频链接
+    const loggerText = ref(""); //合成日志
+    const isFinish = ref(true); // 是否合成完成
+    const frameNumber = ref(""); // 帧数
 
     const showModal = () => {
       visible.value = true;
@@ -149,6 +159,7 @@ export default defineComponent({
       return tool;
     };
 
+    // 绘制火柴人
     const drawPeople = (
       formState: FormState,
       ctx: CanvasRenderingContext2D
@@ -173,7 +184,11 @@ export default defineComponent({
         const radius = hearRadii;
         const startAngle = 0;
         const endAngle = Math.PI * 2;
+        ctx.beginPath();
         ctx.arc(x, y, radius, startAngle, endAngle);
+        ctx.closePath();
+        ctx.fillStyle = "black";
+        ctx.fill();
       };
 
       const body = (startX: number, startY: number) => {
@@ -229,26 +244,127 @@ export default defineComponent({
         ctx.moveTo(rightStartX, rightStartY);
         ctx.lineTo(rightEndX, rightEndY);
       };
+      // ctx.fillRect(0, 0, 500, 500);
+      ctx.fillStyle = "fff";
+      ctx.strokeStyle = "fff";
+      head(250, 100);
+      body(250, 100);
+      arm(
+        250,
+        100,
+        (formState?.leftArm / 360) * Math.PI * 2,
+        (formState?.rightArm / 360) * Math.PI * 2
+      );
+      leg(
+        250,
+        100,
+        (formState?.leftLeg / 360) * Math.PI * 2,
+        (formState?.rightLeg / 360) * Math.PI * 2
+      );
+      ctx.fill();
+      ctx.stroke();
+    };
+
+    const imgToVideo = async () => {
+      if (!ffmpeg.isLoaded()) {
+        await ffmpeg.load();
+      }
+      for (let i in imgs.value) {
+        ffmpeg.FS("writeFile", `${i}.png`, await fetchFile(imgs.value[i]));
+      }
+      console.log("writeFile done!");
+
+      // 读取进度
+      ffmpeg.setProgress(({ ratio }) => {
+        isFinish.value = ratio == 1 ? true : false;
+      });
+      // 读取消息日志
+      ffmpeg.setLogger((res) => {
+        loggerText.value = res.message;
+      });
+
+      // const count = frameNumber.value.toString() || "1"; //FPS
+      // const time = (imgs.value.length / count).toString(); //视频时长,不刻意设置也能符合预期，只是重新合成视频会是之前的时长
+      const count = "60";
+      const time = "2";
+
+      await ffmpeg.run(
+        "-r",
+        count,
+        "-f",
+        "image2",
+        "-i",
+        "%d.png",
+        "-t",
+        time,
+        "video.mp4"
+      );
+
+      const data = ffmpeg.FS("readFile", "video.mp4");
+      videoUrl.value = URL.createObjectURL(
+        new Blob([data.buffer], { type: "video/mp4" })
+      );
+      console.log(videoUrl);
+      setTimeout(() => {
+        downloadVideo();
+      }, 500);
+    };
+    const downloadVideo = () => {
+      const request = new XMLHttpRequest();
+      request.open("GET", videoUrl.value);
+      request.responseType = "blob";
+      request.onload = (res) => {
+        if (res.target.status == 200) {
+          const url = window.URL.createObjectURL(res.currentTarget.response);
+          const link = document.createElement("a");
+          link.href = url;
+          link.setAttribute("download", `${new Date().getTime()}.mp4`);
+          link.click();
+        }
+      };
+      request.send();
     };
 
     const creat = () => {
-      console.log(firstAndLastFrame);
-      const a = document.createElement("a");
+      if (firstAndLastFrame.length < 2) return;
+      const [firstFrame, lastFrame] = firstAndLastFrame;
+      const numOfInter = 60;
+      const interData: FormState[] = [];
+      for (let i = 0; i <= numOfInter; i++) {
+        interData.push({
+          leftArm:
+            (1 - i / numOfInter) * firstFrame?.leftArm +
+            (i / numOfInter) * lastFrame?.leftArm,
+          rightArm:
+            (1 - i / numOfInter) * firstFrame?.rightArm +
+            (i / numOfInter) * lastFrame?.rightArm,
+          leftLeg:
+            (1 - i / numOfInter) * firstFrame?.leftLeg +
+            (i / numOfInter) * lastFrame?.leftLeg,
+          rightLeg:
+            (1 - i / numOfInter) * firstFrame?.rightLeg +
+            (i / numOfInter) * lastFrame?.rightLeg,
+        });
+      }
+
       const canvas = document.createElement("canvas");
       canvas.width = 500;
       canvas.height = 500;
       const ctx = canvas.getContext("2d");
+
       if (ctx) {
         ctx.fillStyle = "#fff";
         ctx.lineWidth = 10;
-        ctx.fillRect(0, 0, 500, 500);
-        ctx.arc(250, 250, 245, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        ctx.drawImage(canvas, 0, 0);
-        a.href = canvas.toDataURL(`image/png`, 1);
-        a.download = `drawing.png`;
-        a.click();
+        for (let i of interData) {
+          ctx.clearRect(0, 0, 500, 500);
+          ctx.fillStyle = "white";
+          ctx.fillRect(0, 0, 500, 500);
+          drawPeople(i, ctx);
+          ctx.drawImage(canvas, 0, 0);
+          const href = canvas.toDataURL(`image/png`, 1);
+          imgs.value.push(href);
+        }
+        imgToVideo();
       }
     };
 
